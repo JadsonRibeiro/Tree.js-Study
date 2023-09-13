@@ -1,11 +1,13 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { View2 } from '@/components/canvas/View'
 import { useColors } from '@/templates/hooks/useColors'
 import { useTextures } from '@/templates/hooks/useTextures'
-import dynamic from 'next/dynamic'
+import { useRef } from 'react'
+import { Apartment } from '@/components/canvas/Examples'
 
-const Apartment = dynamic(() => import('@/components/canvas/Examples').then((mod) => mod.Apartment), { ssr: false })
+// const Apartment = dynamic(() => import('@/components/canvas/Examples').then((mod) => mod.Apartment), { ssr: false })
 
 const View = dynamic(() => import('@/components/canvas/View').then((mod) => mod.View), {
   ssr: false,
@@ -29,8 +31,7 @@ export default function Page() {
   const { texture, changeTexture } = useTextures()
   const { color, changeColor } = useColors()
 
-  console.log('texture', texture)
-  console.log('color', color)
+  const ref = useRef(null)
 
   const textureObj = {
     map: texture[0],
@@ -39,10 +40,14 @@ export default function Page() {
     metalnessMap: texture[3],
   }
 
+  function handleExportModel() {
+    ref.current.export()
+  }
+
   return (
     <>
       <View2>
-        <Apartment texture={textureObj} color={color} />
+        <Apartment texture={textureObj} color={color} ref={ref} />
         <Common color={'white'} />
       </View2>
       <div className='absolute left-0 top-0'>
@@ -57,6 +62,12 @@ export default function Page() {
           <button className='p-1' onClick={() => changeTexture('smooth')}>
             smooth
           </button>
+          <button className='p-1' onClick={() => changeTexture('pavingStones')}>
+            pavingStones
+          </button>
+          <button className='p-1' onClick={() => changeTexture('pavingStones2')}>
+            pavingStones2
+          </button>
         </div>
         <span>Cor</span>
         <div>
@@ -70,6 +81,7 @@ export default function Page() {
             teal
           </button>
         </div>
+        <button onClick={handleExportModel}>Exportar</button>
       </div>
     </>
   )

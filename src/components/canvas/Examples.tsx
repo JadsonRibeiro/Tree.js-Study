@@ -2,13 +2,15 @@
 
 import * as THREE from 'three'
 import { useRouter } from 'next/navigation'
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useLoader } from '@react-three/fiber'
 import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter'
 import { useGLTF, Line, useCursor, MeshDistortMaterial, useFBX, useTexture } from '@react-three/drei'
+import { HouseModel } from '../models/House'
 
-export const Blob = ({ route = '/', ...props }) => {
+export const Blobs = ({ route = '/', ...props }) => {
   const router = useRouter()
   const [hovered, hover] = useState(false)
   useCursor(hovered)
@@ -83,30 +85,14 @@ export function Planet(props) {
 }
 
 export function MeetingRoom(props) {
-  // const dae = useLoader(ColladaLoader, '/models/meeting-room/model.dae')
+  const { scene, materials } = useGLTF('/models/apartments/04/patriani_convertido.glb')
 
-  // console.log('dae', dae)
-
-  // return <primitive object={dae} {...props} dispose={null} />
-  const textures = useTexture({
-    map: '/textures/PavingStones092_1K-JPG_Color.jpg',
-    roughnessMap: '/textures/PavingStones092_1K-JPG_Roughness.jpg',
-    normalMap: '/textures/PavingStones092_1K-JPG_NormalGL.jpg',
-    displacementMap: '/textures/PavingStones092_1K-JPG_Displacement.jpg',
-  })
-
-  const { scene, materials } = useGLTF('/models/apartments/01/apartment_2.gltf')
-
-  Object.assign(materials[''], { ...textures })
+  console.log('materials', materials)
 
   return <primitive object={scene} {...props} />
 }
 
 export function Hilda(props) {
-  // const hilda = useFBX('/models/hilda/Hilda_Regular_00.fbx')
-  // console.log('hilda', hilda)
-  // return <primitive object={hilda} />
-
   const hilda = useGLTF('/models/hilda/Hilda_Regular_00.glb')
 
   console.log('hilda', hilda)
@@ -115,10 +101,6 @@ export function Hilda(props) {
 }
 
 export function Submarine(props) {
-  // const hilda = useFBX('/models/hilda/Hilda_Regular_00.fbx')
-  // console.log('hilda', hilda)
-  // return <primitive object={hilda} />
-
   const submarine = useGLTF('/models/submarine/submarine.gltf')
 
   console.log('submarine', submarine)
@@ -133,40 +115,73 @@ type TextureProps = {
   map: string
 }
 
-export function Apartment({ texture, color }: { texture: TextureProps; color: any }) {
-  // const apartment = useFBX('/models/apartment/apartment_2.fbx')
-  // console.log('apartment', apartment)
-  // return <primitive object={apartment} />
-  // const obj = useLoader(OBJLoader, '/models/apartment/apartment_2.obj')
-  // console.log('apartment', obj)
-  // return <primitive object={obj} />
-  // const ap = useGLTF('/models/ap-2/ap.gltf')
-  // console.log('ap', ap)
-  // return <primitive object={ap.scene} {...props} />
-  // const dae = useLoader(ColladaLoader, '/models/ap-2/ap.dae')
-  // console.log('dae', dae)
-  // return <primitive object={dae} {...props} dispose={null} />
-  // const obj = useLoader(OBJLoader, '/models/ap-2/ap.obj')
-  // console.log('apartment', obj)
-  // return <primitive object={obj} />
-  const { scene, nodes, materials } = useGLTF('/models/apartments/03/House.glb')
+type ApartmentModelProps = {
+  texture: TextureProps
+  color: any
+}
 
-  console.log('materials', materials)
-  console.log('texture', texture)
+export const Apartment = forwardRef(function Apartment({ texture, color }: ApartmentModelProps, ref) {
+  const modelRef = useRef()
+
+  const link = document.createElement('a')
+  link.style.display = 'none'
+  document.body.appendChild(link)
+
+  function save(blob, filename) {
+    link.href = URL.createObjectURL(blob)
+    link.download = filename
+    link.click()
+  }
+
+  function saveArrayBuffer(buffer, filename) {
+    save(new Blob([buffer], { type: 'application/octet-stream' }), filename)
+  }
+
+  useImperativeHandle(ref, () => {
+    return {
+      export() {
+        const exporter = new GLTFExporter()
+
+        exporter.parse(
+          modelRef.current,
+          (result) => {
+            saveArrayBuffer(result, 'scene.glb')
+          },
+          (error) => {
+            console.error('Erro ao gerar arquivo', error)
+          },
+          { binary: true },
+        )
+      },
+    }
+  })
+
+  const [selectedObject, setSelectedObject] = useState('')
+
+  const { scene, nodes } = useGLTF('/models/apartments/03/House.glb')
 
   const textures = useTexture({ ...texture })
 
-  console.log('textures', textures)
-
   useLayoutEffect(() => {
-    Object.assign(materials['stucco yellow outdoor.001'], {
-      color: color,
-      ...textures,
-      // normalMap: texture.normalMap,
-      // roughnessMap: texture.roughnessMap,
-      // map: texture.map,
-    })
-  }, [scene, nodes, materials, texture, color, textures])
+    if (selectedObject) {
+      const newMaterial = new THREE.MeshStandardMaterial({
+        ...nodes[selectedObject].material,
+        ...textures,
+        color,
+      })
 
-  return <primitive object={scene} />
-}
+      nodes[selectedObject].material = newMaterial
+    }
+  }, [scene, nodes, texture, color, textures, selectedObject])
+
+  return (
+    <primitive
+      object={scene}
+      ref={modelRef}
+      onClick={(e) => {
+        setSelectedObject(e.object.name)
+        e.stopPropagation()
+      }}
+    />
+  )
+})

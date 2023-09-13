@@ -36,7 +36,7 @@ View.displayName = 'View'
 
 export const View2 = ({ children }) => {
   return (
-    <Canvas dpr={[1, 2]} camera={{ fov: 50 }}>
+    <Canvas>
       <Stage intensity={1}>
         <mesh>{children}</mesh>
       </Stage>
