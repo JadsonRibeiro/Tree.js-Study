@@ -53,6 +53,7 @@ export default function Page() {
         <button onClick={() => router.push('/hilda')}>Go to hilda page</button>
         <button onClick={() => router.push('/apartment')}>Go to Apartment page</button>
         <button onClick={() => router.push('/submarine')}>Go to Submarine page</button>
+        <button onClick={() => router.push('/bathroom')}>Go to bathroom page</button>
       </div>
 
       <div className='mx-auto flex w-full flex-col flex-wrap items-center p-12 md:flex-row  lg:w-4/5'>

@@ -36,10 +36,10 @@ View.displayName = 'View'
 
 export const View2 = ({ children }) => {
   return (
-    <Canvas>
-      <Stage intensity={1}>
-        <mesh>{children}</mesh>
-      </Stage>
+    <Canvas gl={{ preserveDrawingBuffer: true }}>
+      {/* <Stage intensity={1}> */}
+      <mesh>{children}</mesh>
+      {/* </Stage> */}
       <OrbitControls autoRotate={false} enableZoom={true} enablePan={true} />
     </Canvas>
   )
